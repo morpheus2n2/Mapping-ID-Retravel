@@ -48,18 +48,25 @@ def clean_movie_title(movie_name):
     return movie_name
 
 # Retrieve IDs for each movie and update the YAML data
+existing_ids = set()
 for movie in movies:
     cleaned_movie = clean_movie_title(movie)
     print(f"Searching for: {cleaned_movie}")  # Debugging line
     movie_id = get_movie_id(cleaned_movie)
     if movie_id:
-        data['metadata'][movie]['tmdb_id'] = movie_id
+        if movie_id in existing_ids:
+            confirm = input(f"Duplicate ID {movie_id} found for {movie}. Do you want to proceed? (yes/no): ")
+            if confirm.lower() != 'yes':
+                print(f"Skipping {movie} due to duplicate ID.")
+                continue
+        data['metadata'][movie]['mapping_ID'] = movie_id
+        existing_ids.add(movie_id)
         print(f"Found ID for {movie}: {movie_id}")  # Debugging line
     else:
         print(f"Failed to retrieve ID for {movie}")
 
-# Save the updated data back to the YAML file
+# Save the updated data back to the YAML file without modifying url_poster
 with open(file_path, 'w') as file:
-    yaml.safe_dump(data, file)
+    yaml.safe_dump(data, file, default_flow_style=False)
 
-print("Updated YAML file with TMDb IDs.")
+print("Updated YAML file with TMDb IDs in mapping_ID fields.")
